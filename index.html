@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Maintenance">
+<meta name="theme-color" content="#0F6E56">
+<link rel="manifest" href="manifest.json">
+<title>Property Maintenance Review</title>
+<style>
+:root {
+  --green: #0F6E56;
+  --green-dark: #085041;
+  --green-light: #E1F5EE;
+  --red: #E24B4A;
+  --red-bg: #FCEBEB;
+  --red-text: #A32D2D;
+  --red-border: #F09595;
+  --amber: #EF9F27;
+  --amber-bg: #FAEEDA;
+  --amber-text: #854F0B;
+  --amber-border: #FAC775;
+  --blue: #378ADD;
+  --blue-bg: #E6F1FB;
+  --blue-text: #185FA5;
+  --blue-border: #85B7EB;
+  --teal-bg: #EAF3DE;
+  --teal-text: #3B6D11;
+  --teal-border: #97C459;
+  --bg: #f5f5f3;
+  --surface: #ffffff;
+  --surface2: #f8f8f6;
+  --border: #e5e5e3;
+  --border2: #d0d0ce;
+  --text: #1a1a1a;
+  --text2: #555;
+  --text3: #888;
+  --text4: #aaa;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bot: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 16px; }
+
+.app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: calc(var(--safe-top) + 10px) 16px 10px;
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0; min-height: 52px;
+}
+.topbar-title { font-size: 16px; font-weight: 600; flex: 1; }
+.topbar-sub { font-size: 12px; color: var(--text3); }
+.back-btn { background: none; border: none; font-size: 16px; color: var(--green); cursor: pointer; padding: 4px 8px 4px 0; font-family: inherit; display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.ps-pill { background: var(--green); color: #fff; font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 99px; letter-spacing: .04em; flex-shrink: 0; }
+
+.content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: calc(var(--safe-bot) + 80px); }
+.content-pad { padding: 16px; }
+
+.screen { display: none; }
+.screen.active { display: block; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 18px; border: 1px solid var(--border2); border-radius: var(--radius-sm); background: transparent; color: var(--text); font-size: 15px; cursor: pointer; font-family: inherit; font-weight: 500; transition: background .12s; width: 100%; }
+.btn:active { background: var(--bg); }
+.btn-primary { background: var(--green); border-color: var(--green); color: #fff; }
+.btn-primary:active { background: var(--green-dark); }
+.btn-sm { font-size: 13px; padding: 7px 12px; width: auto; }
+.btn-outline-red { border-color: var(--red-border); color: var(--red-text); }
+.btn-outline-red:active { background: var(--red-bg); }
+
+.field { margin-bottom: 14px; }
+.field label { font-size: 13px; color: var(--text2); display: block; margin-bottom: 5px; font-weight: 500; }
+input[type=text], input[type=date], select, textarea {
+  width: 100%; padding: 11px 12px;
+  border: 1px solid var(--border2); border-radius: var(--radius-sm);
+  background: var(--surface); color: var(--text);
+  font-size: 16px; font-family: inherit; appearance: none; -webkit-appearance: none;
+}
+textarea { resize: none; min-height: 80px; line-height: 1.5; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--green); box-shadow: 0 0 0 2px rgba(15,110,86,.15); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 10px; }
+
+.sec-hdr { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text3); margin: 18px 0 10px; }
+
+.badge { display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 99px; font-size: 12px; font-weight: 500; }
+.b-urgent { background: var(--red-bg); color: var(--red-text); border: 1px solid var(--red-border); }
+.b-mid { background: var(--amber-bg); color: var(--amber-text); border: 1px solid var(--amber-border); }
+.b-long { background: var(--blue-bg); color: var(--blue-text); border: 1px solid var(--blue-border); }
+.b-appeal { background: var(--teal-bg); color: var(--teal-text); border: 1px solid var(--teal-border); }
+
+/* Dashboard */
+.insp-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.insp-card:active { background: var(--bg); }
+.insp-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.insp-dot.complete { background: var(--green); }
+.insp-dot.progress { background: var(--amber); }
+.insp-info { flex: 1; min-width: 0; }
+.insp-addr { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.insp-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.insp-arrow { color: var(--text4); font-size: 18px; }
+.empty-state { text-align: center; padding: 48px 24px; color: var(--text3); }
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+
+/* Room tabs - horizontal scroll */
+.room-scroll { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0 16px 12px; scrollbar-width: none; flex-shrink: 0; }
+.room-scroll::-webkit-scrollbar { display: none; }
+.room-tab { flex-shrink: 0; padding: 7px 13px; border: 1px solid var(--border2); border-radius: 99px; font-size: 13px; background: var(--surface); color: var(--text2); font-family: inherit; cursor: pointer; white-space: nowrap; transition: all .12s; }
+.room-tab.active { background: var(--green); border-color: var(--green); color: #fff; }
+.room-tab.has-items { border-color: var(--green); color: var(--green); }
+.room-tab.active { color: #fff; }
+
+/* Checklist */
+.chk-row { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+.chk-row:last-child { border-bottom: none; }
+.chk-row input[type=checkbox] { width: 20px; height: 20px; margin-top: 1px; flex-shrink: 0; accent-color: var(--green); cursor: pointer; }
+.chk-lbl { flex: 1; font-size: 15px; line-height: 1.4; cursor: pointer; }
+
+/* Item cards */
+.item-card { border-radius: var(--radius-sm); padding: 11px 12px; margin-bottom: 8px; border-left: 3px solid #ccc; background: var(--surface2); }
+.item-card.urgent { border-left-color: var(--red); }
+.item-card.mid { border-left-color: var(--amber); }
+.item-card.long { border-left-color: var(--blue); }
+.item-card.appeal { border-left-color: #639922; }
+.item-hdr { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.item-rm { background: none; border: none; cursor: pointer; color: var(--text4); font-size: 22px; padding: 0; line-height: 1; flex-shrink: 0; }
+.item-rm:active { color: var(--red); }
+
+/* Priority picker */
+.pri-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 12px; }
+.pri-opt { padding: 10px 8px; border-radius: var(--radius-sm); border: 1.5px solid var(--border); cursor: pointer; font-size: 13px; text-align: center; font-family: inherit; background: var(--surface); color: var(--text3); transition: all .12s; line-height: 1.3; }
+.pri-opt.sel-urgent { background: var(--red-bg); border-color: var(--red); color: var(--red-text); font-weight: 600; }
+.pri-opt.sel-mid { background: var(--amber-bg); border-color: var(--amber); color: var(--amber-text); font-weight: 600; }
+.pri-opt.sel-long { background: var(--blue-bg); border-color: var(--blue); color: var(--blue-text); font-weight: 600; }
+.pri-opt.sel-appeal { background: var(--teal-bg); border-color: #639922; color: var(--teal-text); font-weight: 600; }
+
+/* Photo strip */
+.photo-strip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.photo-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+.photo-add-btn { width: 60px; height: 60px; border-radius: 6px; border: 1px dashed var(--border2); display: flex; align-items: center; justify-content: center; cursor: pointer; background: var(--surface); color: var(--text3); font-size: 24px; flex-shrink: 0; }
+
+/* Bottom action bar */
+.bot-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 16px calc(var(--safe-bot) + 10px); display: flex; gap: 10px; z-index: 100; }
+
+/* Logo upload */
+.logo-drop { border: 1px dashed var(--border2); border-radius: var(--radius-sm); padding: 18px; text-align: center; cursor: pointer; background: var(--surface2); }
+
+/* Report */
+.report-header { border-bottom: 2px solid var(--green); padding-bottom: 14px; margin-bottom: 16px; }
+.stat-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 16px; }
+.stat-box { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px 6px; text-align: center; }
+.stat-n { font-size: 22px; font-weight: 600; }
+.stat-l { font-size: 11px; color: var(--text3); margin-top: 2px; line-height: 1.3; }
+.urgent-block { background: var(--red-bg); border: 1px solid var(--red-border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 14px; }
+.report-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.report-item:last-child { border-bottom: none; }
+.report-room { font-size: 11px; color: var(--text3); margin-bottom: 2px; }
+.report-photos { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.report-photo { width: 80px; height: 80px; object-fit: cover; border-radius: 6px; border: 1px solid var(--border); }
+.summary-box { background: var(--green-light); border: 1px solid #9FE1CB; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 14px; font-size: 14px; line-height: 1.6; color: #085041; }
+
+/* Steps */
+.steps { display: flex; align-items: center; padding: 0 16px 14px; }
+.step-dot { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.step-dot.done { background: var(--green); color: #fff; }
+.step-dot.now { background: var(--green); color: #fff; box-shadow: 0 0 0 3px rgba(15,110,86,.2); }
+.step-dot.later { background: var(--bg); color: var(--text3); border: 1px solid var(--border2); }
+.step-line { flex: 1; height: 1px; background: var(--border); }
+.step-lbl { font-size: 11px; color: var(--text3); margin-left: 5px; }
+.step-lbl.now { color: var(--text); font-weight: 500; }
+
+@media print {
+  .topbar, .bot-bar, .room-scroll, .steps, .back-btn { display: none !important; }
+  html, body { overflow: visible; height: auto; }
+  .app { height: auto; }
+  .content { overflow: visible; padding-bottom: 0; }
+  #s-report.screen { display: block !important; }
+  #s-dash, #s-setup, #s-inspect { display: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar" id="topbar">
+    <span class="ps-pill">Property Scouts</span>
+    <span class="topbar-title" id="topbar-title">Maintenance Review</span>
+    <span class="topbar-sub" id="topbar-sub"></span>
+  </div>
+
+  <!-- SCROLLABLE CONTENT -->
+  <div class="content" id="main-content">
+
+    <!-- DASHBOARD -->
+    <div id="s-dash" class="screen active content-pad">
+      <div style="margin-bottom:16px;">
+        <div style="font-size:13px;color:var(--text3);margin-bottom:14px;">Page Property Management · Christchurch</div>
+        <button class="btn btn-primary" onclick="newInspection()">+ New inspection</button>
+      </div>
+      <div class="sec-hdr">Saved inspections</div>
+      <div id="insp-list"></div>
+    </div>
+
+    <!-- SETUP -->
+    <div id="s-setup" class="screen">
+      <div class="steps" id="steps-setup">
+        <div class="step-dot now">1</div><span class="step-lbl now">Details</span>
+        <div class="step-line"></div>
+        <div class="step-dot later">2</div><span class="step-lbl">Inspect</span>
+        <div class="step-line"></div>
+        <div class="step-dot later">3</div><span class="step-lbl">Report</span>
+      </div>
+      <div class="content-pad" style="padding-top:0;">
+        <div class="card">
+          <div class="field"><label>Property address</label><input type="text" id="p-addr" placeholder="e.g. 14 Example Street, Papanui"></div>
+          <div class="field"><label>Inspection date</label><input type="date" id="p-date"></div>
+          <div class="field"><label>Inspection type</label>
+            <select id="p-type"><option>New management</option><option>Annual review</option></select>
+          </div>
+          <div class="field"><label>Owner name</label><input type="text" id="p-owner" placeholder="e.g. Sarah & Tom Williams"></div>
+          <div class="field"><label>Inspector name</label><input type="text" id="p-inspector" placeholder="e.g. Serena Page"></div>
+          <div class="field"><label>Overall property notes (appears at top of report)</label><textarea id="p-summary" placeholder="e.g. Well maintained 3-bedroom home. Owners are proactive. Key items this year are the exterior repaint and heat pump service..."></textarea></div>
+        </div>
+        <div class="card">
+          <div style="font-size:14px;font-weight:500;margin-bottom:6px;">Company logo (optional)</div>
+          <div style="font-size:13px;color:var(--text3);margin-bottom:10px;">Appears on the owner report</div>
+          <div class="logo-drop" onclick="document.getElementById('logo-file').click()">
+            <div id="logo-preview-wrap">
+              <div style="font-size:13px;color:var(--text3);">Tap to upload logo</div>
+              <div style="font-size:12px;color:var(--text4);margin-top:4px;">PNG or JPG</div>
+            </div>
+          </div>
+          <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="handleLogo(this)">
+        </div>
+      </div>
+    </div>
+
+    <!-- INSPECT -->
+    <div id="s-inspect" class="screen">
+      <div class="steps" id="steps-inspect">
+        <div class="step-dot done">✓</div><span class="step-lbl">Details</span>
+        <div class="step-line"></div>
+        <div class="step-dot now">2</div><span class="step-lbl now">Inspect</span>
+        <div class="step-line"></div>
+        <div class="step-dot later">3</div><span class="step-lbl">Report</span>
+      </div>
+      <div class="room-scroll" id="room-tabs"></div>
+      <div class="content-pad" style="padding-top:0;" id="room-content"></div>
+    </div>
+
+    <!-- REPORT -->
+    <div id="s-report" class="screen content-pad">
+      <div id="report-out"></div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bot-bar" id="bot-bar" style="display:none;">
+    <button class="btn" id="bot-back" onclick="botBack()">← Back</button>
+    <button class="btn btn-primary" id="bot-next" onclick="botNext()">Next →</button>
+  </div>
+
+</div>
+
+<script>
+const ROOMS=[
+  {id:'lounge',label:'Lounge',checks:['Walls and ceiling condition','Floor / carpet condition','Windows and locks','Curtains / blinds','Heat pump or heater','Light fittings','Smoke detector','Power points']},
+  {id:'kitchen',label:'Kitchen',checks:['Oven and cooktop','Rangehood / extractor','Dishwasher','Bench and splashback','Sink and taps','Cupboard condition','Flooring','Power points']},
+  {id:'dining',label:'Dining',checks:['Walls and ceiling','Floor condition','Windows and locks','Curtains / blinds','Light fittings']},
+  {id:'bed1',label:'Bedroom 1',checks:['Walls and ceiling','Floor / carpet','Windows and locks','Curtains / blinds','Wardrobe','Light fittings','Power points']},
+  {id:'bed2',label:'Bedroom 2',checks:['Walls and ceiling','Floor / carpet','Windows and locks','Curtains / blinds','Wardrobe','Light fittings','Power points']},
+  {id:'bed3',label:'Bedroom 3',checks:['Walls and ceiling','Floor / carpet','Windows and locks','Curtains / blinds','Wardrobe','Light fittings','Power points']},
+  {id:'bathroom',label:'Bathroom',checks:['Shower / bath condition','Toilet','Vanity and taps','Tiles and grout','Extractor fan','Flooring','Mirror and fittings','Ventilation']},
+  {id:'toilet',label:'Toilet',checks:['Toilet condition','Walls and ceiling','Ventilation','Flooring']},
+  {id:'laundry',label:'Laundry',checks:['Tubs and taps','Washing machine plumbing','Dryer venting','Flooring','Extractor fan']},
+  {id:'garage',label:'Garage',checks:['Door mechanism','Floor condition','Walls and ceiling','Lighting','Security','Internal access door']},
+  {id:'exterior',label:'Exterior / grounds',checks:['Roof condition','Gutters and downpipes','Cladding / weatherboard','Paths and driveway','Fencing condition','Gate condition and latches','Deck / patio','Letterbox','Clothesline','Trees: overhanging branches or dead limbs','Shrubs and garden beds: overgrown or encroaching','Lawn condition']},
+];
+const PRI=[
+  {id:'urgent',label:'Urgent / safety',cls:'sel-urgent',bcls:'b-urgent'},
+  {id:'mid',label:'Mid-term\n3–6 months',cls:'sel-mid',bcls:'b-mid'},
+  {id:'long',label:'Long-term\n6–12+ months',cls:'sel-long',bcls:'b-long'},
+  {id:'appeal',label:'Rent faster\nimprovement',cls:'sel-appeal',bcls:'b-appeal'},
+];
+const PRI_LABELS={urgent:'Urgent / safety',mid:'Mid-term (3-6 months)',long:'Long-term (6-12+ months)',appeal:'Rent faster improvement'};
+
+let curScreen='dash';
+let curInspId=null;
+let curRoom=ROOMS[0].id;
+let selPri=null;
+let stagedPhotos=[];
+let logoData=null;
+
+// Storage helpers
+function loadInspections(){try{return JSON.parse(localStorage.getItem('inspections')||'[]');}catch{return[];}}
+function saveInspections(arr){localStorage.setItem('inspections',JSON.stringify(arr));}
+function loadInsp(id){return loadInspections().find(i=>i.id===id)||null;}
+function saveInsp(insp){
+  const arr=loadInspections();
+  const idx=arr.findIndex(i=>i.id===insp.id);
+  if(idx>=0)arr[idx]=insp; else arr.unshift(insp);
+  saveInspections(arr);
+}
+function newId(){return 'i'+Date.now();}
+
+function goScreen(s){
+  document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
+  document.getElementById('s-'+s).classList.add('active');
+  curScreen=s;
+  const bar=document.getElementById('bot-bar');
+  const tb=document.getElementById('topbar-title');
+  const ts=document.getElementById('topbar-sub');
+  const bc=document.getElementById('topbar').querySelector('.back-btn');
+  if(bc)bc.remove();
+  if(s==='dash'){
+    tb.textContent='Maintenance Review';
+    ts.textContent='';
+    bar.style.display='none';
+    renderDash();
+  } else if(s==='setup'){
+    tb.textContent='Property details';
+    ts.textContent='';
+    bar.style.display='flex';
+    document.getElementById('bot-back').textContent='← Cancel';
+    document.getElementById('bot-next').textContent='Start inspection →';
+  } else if(s==='inspect'){
+    const insp=loadInsp(curInspId);
+    tb.textContent=insp?shortenAddr(insp.address):'Inspection';
+    ts.textContent='';
+    bar.style.display='flex';
+    document.getElementById('bot-back').textContent='← Details';
+    document.getElementById('bot-next').textContent='View report →';
+    renderInspect();
+  } else if(s==='report'){
+    const insp=loadInsp(curInspId);
+    tb.textContent='Report';
+    ts.textContent=insp?shortenAddr(insp.address):'';
+    bar.style.display='flex';
+    document.getElementById('bot-back').textContent='← Inspection';
+    document.getElementById('bot-next').textContent='Print / PDF';
+    renderReport();
+  }
+  document.getElementById('main-content').scrollTop=0;
+}
+
+function shortenAddr(addr){if(!addr)return '';return addr.length>28?addr.substring(0,26)+'…':addr;}
+
+function botBack(){
+  if(curScreen==='setup') goScreen('dash');
+  else if(curScreen==='inspect') goScreen('setup');
+  else if(curScreen==='report') goScreen('inspect');
+}
+function botNext(){
+  if(curScreen==='setup') saveAndInspect();
+  else if(curScreen==='inspect') goScreen('report');
+  else if(curScreen==='report') window.print();
+}
+
+// Dashboard
+function renderDash(){
+  const arr=loadInspections();
+  const el=document.getElementById('insp-list');
+  if(!arr.length){
+    el.innerHTML=`<div class="empty-state"><div class="empty-icon">🏠</div><div style="font-size:15px;font-weight:500;margin-bottom:6px;">No inspections yet</div><div style="font-size:14px;">Tap "+ New inspection" to get started</div></div>`;
+    return;
+  }
+  el.innerHTML=arr.map(insp=>{
+    const total=Object.values(insp.items||{}).flat().length;
+    const dateStr=insp.date?new Date(insp.date).toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'}):'';
+    return `<div class="insp-card" onclick="openInspection('${insp.id}')">
+      <div class="insp-dot ${total>0?'progress':'complete'}"></div>
+      <div class="insp-info">
+        <div class="insp-addr">${insp.address||'No address'}</div>
+        <div class="insp-meta">${insp.type||''} · ${dateStr}${total>0?' · '+total+' item'+(total!==1?'s':''):'· No items yet'}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-sm btn-outline-red" onclick="event.stopPropagation();deleteInspection('${insp.id}')" style="padding:5px 8px;width:auto;">Delete</button>
+        <div class="insp-arrow">›</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function newInspection(){
+  curInspId=newId();
+  logoData=null;
+  document.getElementById('p-addr').value='';
+  document.getElementById('p-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('p-type').value='New management';
+  document.getElementById('p-owner').value='';
+  document.getElementById('p-inspector').value='Serena Page';
+  document.getElementById('p-summary').value='';
+  document.getElementById('logo-preview-wrap').innerHTML='<div style="font-size:13px;color:var(--text3);">Tap to upload logo</div><div style="font-size:12px;color:var(--text4);margin-top:4px;">PNG or JPG</div>';
+  curRoom=ROOMS[0].id;
+  goScreen('setup');
+}
+
+function openInspection(id){
+  curInspId=id;
+  const insp=loadInsp(id);
+  if(!insp)return;
+  logoData=insp.logoData||null;
+  document.getElementById('p-addr').value=insp.address||'';
+  document.getElementById('p-date').value=insp.date||new Date().toISOString().split('T')[0];
+  document.getElementById('p-type').value=insp.type||'New management';
+  document.getElementById('p-owner').value=insp.owner||'';
+  document.getElementById('p-inspector').value=insp.inspector||'';
+  document.getElementById('p-summary').value=insp.summary||'';
+  if(logoData){
+    document.getElementById('logo-preview-wrap').innerHTML=`<img src="${logoData}" style="max-height:56px;max-width:180px;object-fit:contain;">`;
+  }
+  curRoom=ROOMS[0].id;
+  goScreen('setup');
+}
+
+function deleteInspection(id){
+  if(!confirm('Delete this inspection? This cannot be undone.'))return;
+  const arr=loadInspections().filter(i=>i.id!==id);
+  saveInspections(arr);
+  renderDash();
+}
+
+function handleLogo(inp){
+  const file=inp.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    logoData=e.target.result;
+    document.getElementById('logo-preview-wrap').innerHTML=`<img src="${logoData}" style="max-height:56px;max-width:180px;object-fit:contain;">`;
+    autoSave();
+  };
+  r.readAsDataURL(file);
+}
+
+function getFormData(){
+  return {
+    address: document.getElementById('p-addr').value.trim(),
+    date: document.getElementById('p-date').value,
+    type: document.getElementById('p-type').value,
+    owner: document.getElementById('p-owner').value.trim(),
+    inspector: document.getElementById('p-inspector').value.trim(),
+    summary: document.getElementById('p-summary').value.trim(),
+  };
+}
+
+function autoSave(){
+  const existing=loadInsp(curInspId)||{id:curInspId,items:{}};
+  ROOMS.forEach(r=>{if(!existing.items[r.id])existing.items[r.id]=[];});
+  const form=getFormData();
+  saveInsp({...existing,...form,logoData:logoData});
+}
+
+function saveAndInspect(){
+  const addr=document.getElementById('p-addr').value.trim();
+  if(!addr){alert('Please enter the property address.');return;}
+  autoSave();
+  goScreen('inspect');
+}
+
+// Inspection
+function renderInspect(){
+  const insp=loadInsp(curInspId);
+  if(!insp)return;
+  const items=insp.items||{};
+
+  const tabs=document.getElementById('room-tabs');
+  tabs.innerHTML='';
+  ROOMS.forEach(r=>{
+    const cnt=(items[r.id]||[]).length;
+    const b=document.createElement('button');
+    b.className='room-tab'+(r.id===curRoom?' active':'')+(cnt>0&&r.id!==curRoom?' has-items':'');
+    b.textContent=r.label+(cnt>0?' ('+cnt+')':'');
+    b.onclick=()=>{curRoom=r.id;selPri=null;stagedPhotos=[];renderInspect();document.getElementById('main-content').scrollTop=0;};
+    tabs.appendChild(b);
+  });
+
+  const room=ROOMS.find(r=>r.id===curRoom);
+  const its=items[curRoom]||[];
+  let html=`<div style="font-size:17px;font-weight:600;margin-bottom:12px;">${room.label}</div>`;
+
+  html+=`<div class="sec-hdr">Common issues</div><div class="card" style="padding:4px 14px;">`;
+  room.checks.forEach(chk=>{
+    const ex=its.find(i=>i.label===chk);
+    const cid='c_'+chk.replace(/[^a-zA-Z0-9]/g,'_');
+    html+=`<div class="chk-row">
+      <input type="checkbox" id="${cid}" ${ex?'checked':''} onchange="toggleChk(${JSON.stringify(chk)},this.checked)">
+      <label class="chk-lbl" for="${cid}">${chk}</label>
+      ${ex?`<span class="badge ${ex.bcls}" style="flex-shrink:0;font-size:11px;">${PRI_LABELS[ex.pid]||ex.priority}</span>`:''}
+    </div>`;
+  });
+  html+=`</div>`;
+
+  if(its.length>0){
+    html+=`<div class="sec-hdr">Logged items (${its.length})</div>`;
+    its.forEach((item,idx)=>{
+      html+=`<div class="item-card ${item.pid}">
+        <div class="item-hdr">
+          <div style="flex:1;">
+            <span class="badge ${item.bcls}" style="margin-bottom:6px;display:inline-flex;font-size:11px;">${PRI_LABELS[item.pid]||item.priority}</span>
+            <div style="font-size:15px;font-weight:500;">${item.label}</div>
+            ${item.note?`<div style="font-size:13px;color:var(--text2);margin-top:4px;line-height:1.4;">${item.note}</div>`:''}
+            ${item.photos&&item.photos.length>0?`<div class="photo-strip">${item.photos.map(p=>`<img class="photo-thumb" src="${p}">`).join('')}</div>`:''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;margin-left:8px;">
+            <button class="item-rm" onclick="removeItem(${idx})">×</button>
+            <label class="photo-add-btn" title="Add photo" style="width:36px;height:36px;font-size:18px;">
+              <input type="file" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(${idx},this)">+
+            </label>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
+  html+=`<div class="sec-hdr">Add custom item</div>
+  <div class="card">
+    <div class="field"><label>Description</label><input type="text" id="ni-lbl" placeholder="e.g. Repaint front fence"></div>
+    <div style="font-size:13px;color:var(--text2);font-weight:500;margin-bottom:6px;">Priority</div>
+    <div class="pri-grid" id="pri-grid">
+      ${PRI.map(p=>`<button class="pri-opt ${selPri===p.id?p.cls:''}" data-pid="${p.id}" onclick="selPriority('${p.id}')" style="white-space:pre-line;">${p.label}</button>`).join('')}
+    </div>
+    <div class="field"><label>Notes (optional)</label><textarea id="ni-note" placeholder="Details, cost estimates, contractor notes..."></textarea></div>
+    <div class="field">
+      <label>Photos (optional)</label>
+      <label style="display:inline-flex;align-items:center;gap:8px;cursor:pointer;padding:9px 14px;border:1px dashed var(--border2);border-radius:var(--radius-sm);font-size:14px;color:var(--text3);">
+        <input type="file" accept="image/*" capture="environment" multiple style="display:none" onchange="stagePhotos(this)"> + Add photos
+      </label>
+      <div id="staged-photos" class="photo-strip" style="margin-top:8px;"></div>
+    </div>
+    <button class="btn btn-primary" onclick="addCustomItem()">Add item</button>
+  </div>`;
+
+  document.getElementById('room-content').innerHTML=html;
+}
+
+function selPriority(pid){
+  selPri=pid;
+  document.querySelectorAll('#pri-grid .pri-opt').forEach(b=>{
+    const p=PRI.find(x=>x.id===b.dataset.pid);
+    b.className='pri-opt'+(b.dataset.pid===pid?' '+p.cls:'');
+  });
+}
+
+function toggleChk(label,checked){
+  const insp=loadInsp(curInspId);if(!insp)return;
+  if(!insp.items[curRoom])insp.items[curRoom]=[];
+  if(checked){
+    if(!insp.items[curRoom].find(i=>i.label===label)){
+      const p=PRI[1];
+      insp.items[curRoom].push({label,note:'',pid:p.id,priority:p.label,bcls:p.bcls,photos:[]});
+    }
+  } else {
+    insp.items[curRoom]=insp.items[curRoom].filter(i=>i.label!==label);
+  }
+  saveInsp(insp);
+  renderInspect();
+}
+
+function addCustomItem(){
+  const label=document.getElementById('ni-lbl').value.trim();
+  const note=document.getElementById('ni-note').value.trim();
+  if(!label){alert('Please enter a description.');return;}
+  if(!selPri){alert('Please select a priority.');return;}
+  const p=PRI.find(x=>x.id===selPri);
+  const insp=loadInsp(curInspId);if(!insp)return;
+  if(!insp.items[curRoom])insp.items[curRoom]=[];
+  insp.items[curRoom].push({label,note,pid:p.id,priority:p.label,bcls:p.bcls,photos:[...stagedPhotos]});
+  saveInsp(insp);
+  selPri=null;stagedPhotos=[];
+  renderInspect();
+  document.getElementById('main-content').scrollTop=0;
+}
+
+function removeItem(idx){
+  const insp=loadInsp(curInspId);if(!insp)return;
+  insp.items[curRoom].splice(idx,1);
+  saveInsp(insp);
+  renderInspect();
+}
+
+function stagePhotos(inp){
+  stagedPhotos=[];
+  const files=Array.from(inp.files);
+  let loaded=0;
+  files.forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      stagedPhotos.push(e.target.result);loaded++;
+      if(loaded===files.length)document.getElementById('staged-photos').innerHTML=stagedPhotos.map(p=>`<img class="photo-thumb" src="${p}">`).join('');
+    };
+    r.readAsDataURL(f);
+  });
+}
+
+function addPhoto(idx,inp){
+  const file=inp.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    const insp=loadInsp(curInspId);if(!insp)return;
+    if(!insp.items[curRoom][idx].photos)insp.items[curRoom][idx].photos=[];
+    insp.items[curRoom][idx].photos.push(e.target.result);
+    saveInsp(insp);
+    renderInspect();
+  };
+  r.readAsDataURL(file);
+}
+
+// Report
+function renderReport(){
+  const insp=loadInsp(curInspId);if(!insp)return;
+  const all=[];
+  ROOMS.forEach(r=>{(insp.items[r.id]||[]).forEach(it=>all.push({...it,room:r.label}));});
+  const cnt={urgent:0,mid:0,long:0,appeal:0};
+  all.forEach(i=>cnt[i.pid]=(cnt[i.pid]||0)+1);
+  const dateStr=insp.date?new Date(insp.date).toLocaleDateString('en-NZ',{day:'numeric',month:'long',year:'numeric'}):'';
+
+  let html=`<div class="report-header">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+      <div>
+        <div style="font-size:20px;font-weight:600;">Maintenance review report</div>
+        <div style="font-size:14px;color:var(--text3);margin-top:3px;">${insp.address||''}</div>
+      </div>
+      <div style="text-align:right;">
+        ${insp.logoData?`<img src="${insp.logoData}" style="max-height:44px;max-width:140px;object-fit:contain;display:block;margin-bottom:4px;">`:''}
+        <span class="ps-pill">Property Scouts</span>
+        <div style="font-size:12px;color:var(--text3);margin-top:4px;">Page Property Management</div>
+      </div>
+    </div>
+    <div style="margin-top:10px;font-size:13px;color:var(--text2);display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+      <div><span style="color:var(--text3);">For: </span>${insp.owner||'Owner'}</div>
+      <div><span style="color:var(--text3);">Date: </span>${dateStr}</div>
+      <div><span style="color:var(--text3);">Inspector: </span>${insp.inspector||''}</div>
+      <div><span style="color:var(--text3);">Type: </span>${insp.type||''}</div>
+    </div>
+  </div>`;
+
+  if(insp.summary){
+    html+=`<div class="summary-box"><strong>Property overview:</strong> ${insp.summary}</div>`;
+  }
+
+  html+=`<div class="stat-row">
+    <div class="stat-box"><div class="stat-n" style="color:var(--red-text);">${cnt.urgent||0}</div><div class="stat-l">Urgent</div></div>
+    <div class="stat-box"><div class="stat-n" style="color:var(--amber-text);">${cnt.mid||0}</div><div class="stat-l">Mid-term</div></div>
+    <div class="stat-box"><div class="stat-n" style="color:var(--blue-text);">${cnt.long||0}</div><div class="stat-l">Long-term</div></div>
+    <div class="stat-box"><div class="stat-n" style="color:var(--teal-text);">${cnt.appeal||0}</div><div class="stat-l">Rent faster</div></div>
+  </div>`;
+
+  if(cnt.urgent>0){
+    html+=`<div class="urgent-block"><div style="font-size:13px;font-weight:600;color:var(--red-text);margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:50%;background:var(--red);display:inline-block;"></span>Urgent items requiring immediate attention</div>`;
+    all.filter(i=>i.pid==='urgent').forEach(it=>{
+      html+=`<div style="padding:8px 0;border-bottom:1px solid var(--red-border);">
+        <div style="font-size:12px;color:var(--text3);">${it.room}</div>
+        <div style="font-size:14px;font-weight:500;color:#791F1F;">${it.label}</div>
+        ${it.note?`<div style="font-size:13px;color:var(--red-text);margin-top:2px;">${it.note}</div>`:''}
+        ${it.photos&&it.photos.length>0?`<div class="report-photos">${it.photos.map(p=>`<img class="report-photo" src="${p}">`).join('')}</div>`:''}
+      </div>`;
+    });
+    html+=`</div>`;
+  }
+
+  [{id:'mid',label:'Mid-term maintenance (within 3-6 months)',bcls:'b-mid'},{id:'long',label:'Long-term maintenance (6-12+ months)',bcls:'b-long'},{id:'appeal',label:'Recommendations to improve rentability',bcls:'b-appeal'}].forEach(p=>{
+    const pits=all.filter(i=>i.pid===p.id);
+    if(!pits.length)return;
+    html+=`<div style="margin-bottom:16px;"><div class="sec-hdr">${p.label}</div><div class="card" style="padding:4px 14px;">`;
+    pits.forEach(it=>{
+      html+=`<div class="report-item">
+        <div class="report-room">${it.room}</div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+          <div style="font-size:15px;font-weight:500;">${it.label}</div>
+          <span class="badge ${p.bcls}" style="flex-shrink:0;font-size:11px;">${PRI_LABELS[it.pid]}</span>
+        </div>
+        ${it.note?`<div style="font-size:13px;color:var(--text2);margin-top:3px;">${it.note}</div>`:''}
+        ${it.photos&&it.photos.length>0?`<div class="report-photos">${it.photos.map(ph=>`<img class="report-photo" src="${ph}">`).join('')}</div>`:''}
+      </div>`;
+    });
+    html+=`</div></div>`;
+  });
+
+  if(!all.length){html+=`<div style="text-align:center;padding:40px 16px;color:var(--text3);">No maintenance items logged. Property is in good order.</div>`;}
+
+  html+=`<div style="margin-top:24px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text4);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+    <span>Property Scouts | Page Property Management | Christchurch</span>
+    <span>Generated ${new Date().toLocaleDateString('en-NZ')}</span>
+  </div>`;
+
+  document.getElementById('report-out').innerHTML=html;
+}
+
+// Service worker registration
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+
+// Init
+goScreen('dash');
+</script>
+</body>
+</html>
