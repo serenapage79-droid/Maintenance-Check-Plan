@@ -389,7 +389,6 @@ function newInspection(){
   document.getElementById('p-owner').value='';
   document.getElementById('p-inspector').value='Serena Page';
   document.getElementById('p-summary').value='';
-  document.getElementById('logo-preview-wrap').innerHTML='<div style="font-size:13px;color:var(--text3);">Tap to upload logo</div><div style="font-size:12px;color:var(--text4);margin-top:4px;">PNG or JPG</div>';
   curRoom=ROOMS[0].id;
   goScreen('setup');
 }
@@ -404,9 +403,6 @@ function openInspection(id){
   document.getElementById('p-owner').value=insp.owner||'';
   document.getElementById('p-inspector').value=insp.inspector||'';
   document.getElementById('p-summary').value=insp.summary||'';
-  if(logoData){
-    document.getElementById('logo-preview-wrap').innerHTML=`<img src="${logoData}" style="max-height:56px;max-width:180px;object-fit:contain;">`;
-  }
   curRoom=ROOMS[0].id;
   goScreen('setup');
 }
